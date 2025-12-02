@@ -1,0 +1,45 @@
+{
+  "name": "glassballots-blockchain-service",
+  "version": "1.0.0",
+  "description": "Blockchain backend service for GlassBallots platform",
+  "type": "module",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "nodemon api/server.js",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network hardhatMainnet",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "node": "hardhat node",
+    "migrate": "node database/migrations/001_seed_proposals.js"
+  },
+  "keywords": [
+    "blockchain",
+    "voting",
+    "governance",
+    "ethereum",
+    "hardhat"
+  ],
+  "author": "CS4800 SCRUMBAGS",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.15.0",
+    "express": "^4.21.2",
+    "node-fetch": "^3.3.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ignition": "^3.0.3",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@types/node": "^20.10.0",
+    "hardhat": "^3.0.9",
+    "nodemon": "^3.0.2",
+    "typescript": "~5.8.0",
+    "viem": "^2.38.5"
+  }
+}

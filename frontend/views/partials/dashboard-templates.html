@@ -1,0 +1,455 @@
+<!-- Dashboard Templates Partial -->
+<!-- This file contains all reusable template definitions for the dashboard -->
+
+<!-- ============================================ -->
+<!-- LOADER TEMPLATES -->
+<!-- ============================================ -->
+
+<template id="tpl-loader">
+    <div class="loader-container">
+        <div class="loader"></div>
+        <p data-slot="message">Loading...</p>
+    </div>
+</template>
+
+<template id="tpl-error-card">
+    <div class="result-card">
+        <h3>Error</h3>
+        <p data-slot="message"></p>
+        <button class="btn btn-secondary btn-sm" data-slot="back-btn" style="margin-top: 1rem;">← Back to Home</button>
+    </div>
+</template>
+
+<template id="tpl-empty-state">
+    <div class="result-card">
+        <p data-slot="message"></p>
+        <p data-slot="submessage" style="color: var(--text-secondary); margin-top: 0.5rem;"></p>
+    </div>
+</template>
+
+<!-- ============================================ -->
+<!-- PROPOSAL CARD TEMPLATES -->
+<!-- ============================================ -->
+
+<template id="tpl-proposal-card">
+    <div class="proposal-card">
+        <h3 data-slot="title"></h3>
+        <div class="proposal-meta">
+            <span class="status-badge" data-slot="status"></span>
+            <span data-slot="decision-date"></span>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-petition-card">
+    <div class="proposal-card">
+        <h3 data-slot="title"></h3>
+        <div class="proposal-meta">
+            <span class="status-badge petition">PETITION</span>
+            <span data-slot="decision-date"></span>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-user-proposal-card">
+    <div class="proposal-card">
+        <h3 data-slot="title"></h3>
+        <div class="proposal-meta">
+            <span class="status-badge" data-slot="status"></span>
+            <span data-slot="decision-date"></span>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-user-proposals-header">
+    <div class="user-proposals-header" style="grid-column: 1 / -1; margin-bottom: 1rem;">
+        <button class="btn btn-secondary btn-sm" data-action="return-home" style="margin-bottom: 1rem;">← Back to Home</button>
+        <h2 data-slot="title" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);"></h2>
+        <p data-slot="count" style="color: var(--text-secondary); margin-top: 0.25rem;"></p>
+        <div class="user-proposals-filter" style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="text" id="userProposalSearch" data-slot="search-input" placeholder="Search proposals..."
+                   style="flex: 1; min-width: 200px; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            <select id="userProposalSort" style="padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 0.9rem;">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="alpha">A-Z</option>
+            </select>
+        </div>
+    </div>
+    <div id="userProposalsGrid" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;"></div>
+</template>
+
+<!-- ============================================ -->
+<!-- ORGANIZATION TEMPLATES -->
+<!-- ============================================ -->
+
+<template id="tpl-org-search-result">
+    <div class="org-result-card">
+        <div class="org-result-info">
+            <div class="org-result-name" data-slot="name"></div>
+            <div class="org-result-meta">
+                <span class="org-result-code" data-slot="code"></span>
+                <span data-slot="member-count"></span>
+                <span data-slot="owner"></span>
+            </div>
+        </div>
+        <div class="org-result-actions" data-slot="actions"></div>
+    </div>
+</template>
+
+<template id="tpl-org-role-badge">
+    <span class="org-role-badge" data-slot="role"></span>
+</template>
+
+<template id="tpl-org-join-button">
+    <button class="btn btn-primary btn-sm" data-action="join">Request to Join</button>
+</template>
+
+<template id="tpl-my-organizations">
+    <div class="my-organizations-content" style="grid-column: 1 / -1;">
+        <button class="btn btn-secondary btn-sm" data-action="return-home" style="margin-bottom: 1rem; align-self: flex-start;">← Back to Home</button>
+        <div class="my-orgs-header">
+            <h2>My Organizations</h2>
+            <button class="btn btn-primary" data-action="create-org">+ Create New</button>
+        </div>
+        <div id="ownedOrgsList"></div>
+        <div id="memberOrgsList"></div>
+    </div>
+</template>
+
+<template id="tpl-orgs-section-header">
+    <h3 data-slot="title" style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;"></h3>
+    <div data-slot="grid" class="orgs-cards-grid"></div>
+</template>
+
+<template id="tpl-owned-org-card">
+    <div class="org-card owned-org-card">
+        <div class="org-card-header">
+            <div class="org-card-title" data-slot="name"></div>
+            <span class="org-card-role owner">Owner</span>
+        </div>
+        <div class="org-card-stats">
+            <span data-slot="member-count"></span>
+            <span data-slot="pending-count" style="color: var(--danger);"></span>
+        </div>
+        <div class="org-card-code">
+            <span data-slot="code-display"></span>
+            <button data-action="copy-code" title="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+        <div class="org-card-actions">
+            <button class="btn btn-primary btn-sm" data-action="new-proposal">+ New Proposal</button>
+            <button class="btn btn-secondary btn-sm" data-action="view-requests">View Requests</button>
+            <button class="btn btn-sm" style="background: var(--danger); color: white;" data-action="delete-org">Delete</button>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-member-org-card">
+    <div class="org-card owned-org-card">
+        <div class="org-card-header">
+            <div class="org-card-title" data-slot="name"></div>
+            <span class="org-card-role" data-slot="role-class"></span>
+        </div>
+        <div class="org-card-stats">
+            <span data-slot="member-count"></span>
+        </div>
+        <div class="org-card-code">
+            <span data-slot="code-display"></span>
+            <button data-action="copy-code" title="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+        <div class="org-card-actions" data-slot="actions"></div>
+    </div>
+</template>
+
+<template id="tpl-member-org-actions-approved">
+    <button class="btn btn-primary btn-sm" data-action="view-proposals">View Proposals</button>
+    <button class="btn btn-sm" style="background: var(--danger); color: white;" data-action="leave-org">Leave</button>
+</template>
+
+<template id="tpl-member-org-actions-pending">
+    <span style="color: var(--text-secondary); font-size: 0.875rem;">Awaiting approval...</span>
+</template>
+
+<!-- ============================================ -->
+<!-- ORGANIZATION DASHBOARD TEMPLATES -->
+<!-- ============================================ -->
+
+<template id="tpl-org-dashboard">
+    <div class="org-dashboard" style="grid-column: 1 / -1;">
+        <div class="org-dashboard-header">
+            <button class="btn btn-secondary btn-sm" data-action="back" style="margin-bottom: 1rem;">← Back</button>
+            <div class="org-dashboard-title-row">
+                <div>
+                    <h2 data-slot="org-name" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;"></h2>
+                    <div style="display: flex; gap: 1rem; align-items: center; color: var(--text-secondary);">
+                        <span data-slot="member-count"></span>
+                        <span data-slot="code-display"></span>
+                        <button data-action="copy-code" class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.5rem;">Copy Code</button>
+                    </div>
+                </div>
+                <div class="org-dashboard-header-actions" data-slot="header-actions"></div>
+            </div>
+        </div>
+        
+        <div class="org-dashboard-tabs" data-slot="tabs"></div>
+        <div id="orgDashboardContent" class="org-dashboard-content"></div>
+    </div>
+</template>
+
+<template id="tpl-org-dash-tab">
+    <button class="org-dash-tab" data-slot="tab"></button>
+</template>
+
+<template id="tpl-org-proposal-card">
+    <div class="proposal-card org-proposal-card">
+        <div class="proposal-card-header">
+            <h3 data-slot="title"></h3>
+            <span class="restricted-badge" data-slot="restricted" style="display: none;">RESTRICTED VOTING</span>
+        </div>
+        <div class="proposal-meta">
+            <span data-slot="decision-date"></span>
+            <span data-slot="vote-count"></span>
+        </div>
+        <div class="proposal-actions" data-slot="admin-actions" style="display: none;"></div>
+        <div data-slot="vote-status"></div>
+    </div>
+</template>
+
+<template id="tpl-org-proposal-admin-actions">
+    <button class="btn btn-sm btn-secondary" data-action="edit">Edit</button>
+    <button class="btn btn-sm btn-secondary" data-action="permissions">Permissions</button>
+</template>
+
+<template id="tpl-vote-already-voted">
+    <div class="vote-status-notice" style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; color: #3b82f6;">
+        You have already voted: <span data-slot="vote-type"></span>
+    </div>
+</template>
+
+<template id="tpl-vote-restricted">
+    <div class="vote-restriction-notice" style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 6px; color: #f59e0b;">
+        [Restricted] Selected members only
+    </div>
+</template>
+
+<template id="tpl-petition-item">
+    <div class="petition-card">
+        <div class="petition-header">
+            <div>
+                <strong data-slot="proposal-title"></strong>
+                <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                    By <span data-slot="username"></span>
+                    <span style="font-family: monospace; font-size: 0.75rem;" data-slot="unique-id"></span>
+                </div>
+            </div>
+            <div data-slot="timestamp" style="font-size: 0.8rem; color: var(--text-muted);"></div>
+        </div>
+        <div class="petition-text" data-slot="text" style="margin-top: 0.75rem; padding: 1rem; background: var(--bg); border-radius: 8px; white-space: pre-wrap;"></div>
+    </div>
+</template>
+
+<template id="tpl-pending-request-card">
+    <div class="pending-request-card">
+        <div class="pending-request-info">
+            <div class="pending-request-username" data-slot="username"></div>
+            <div class="pending-request-id" data-slot="unique-id"></div>
+            <div class="pending-request-date" data-slot="request-date"></div>
+        </div>
+        <div class="pending-request-actions">
+            <button class="btn btn-sm btn-primary" data-action="approve">Approve</button>
+            <button class="btn btn-sm" style="background: var(--danger); color: white;" data-action="reject">Reject</button>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-member-card">
+    <div class="member-card">
+        <div class="member-info">
+            <div class="member-username" data-slot="username"></div>
+            <div class="member-id" data-slot="unique-id"></div>
+            <span class="member-role-badge" data-slot="role"></span>
+        </div>
+        <div class="member-actions" data-slot="actions"></div>
+    </div>
+</template>
+
+<!-- ============================================ -->
+<!-- MODAL TEMPLATES -->
+<!-- ============================================ -->
+
+<template id="tpl-modal-overlay">
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-slot="title"></h2>
+                <button class="modal-close" data-action="close">×</button>
+            </div>
+            <div class="modal-body" data-slot="body"></div>
+            <div class="modal-footer" data-slot="footer"></div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-create-org-form">
+    <form id="createOrgForm" class="modal-body">
+        <div class="modal-form-group">
+            <label>Organization Name</label>
+            <input type="text" name="name" placeholder="Enter organization name..." required>
+        </div>
+        <div class="modal-form-group">
+            <label>Description (Optional)</label>
+            <textarea name="description" placeholder="Describe your organization..."></textarea>
+        </div>
+    </form>
+</template>
+
+<template id="tpl-create-proposal-form">
+    <form id="createOrgProposalForm" class="modal-body">
+        <div class="modal-form-group">
+            <label>Proposal Title</label>
+            <input type="text" name="title" placeholder="Enter proposal title..." required>
+        </div>
+        <div class="modal-form-group">
+            <label>Description</label>
+            <textarea name="description" placeholder="Describe the proposal..." required></textarea>
+        </div>
+        <div class="modal-form-group">
+            <label>Authorized By</label>
+            <input type="text" name="authorized_by" placeholder="Name of authorizing person or body..." required>
+        </div>
+        <div class="modal-form-group">
+            <label>Decision Date</label>
+            <input type="date" name="decision_date" required>
+        </div>
+        <div class="modal-form-group">
+            <label>Voting Permissions</label>
+            <div class="voting-permissions-section">
+                <div class="voting-permission-controls">
+                    <button type="button" class="btn btn-sm btn-secondary" data-action="select-all">Select All</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-action="deselect-all">Deselect All</button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0;">Deselect members to restrict voting access. Unchecked members will see "RESTRICTED VOTING" on this proposal.</p>
+                <div class="voters-list" data-slot="voters-list"></div>
+            </div>
+        </div>
+    </form>
+</template>
+
+<template id="tpl-voter-checkbox">
+    <label class="voter-checkbox">
+        <input type="checkbox" name="allowed_voters" checked>
+        <span class="voter-username" data-slot="username"></span>
+        <span class="voter-id" data-slot="unique-id"></span>
+    </label>
+</template>
+
+<template id="tpl-confirm-modal">
+    <div class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 data-slot="title"></h2>
+                <button class="modal-close" data-action="close">×</button>
+            </div>
+            <div class="modal-body">
+                <p data-slot="message"></p>
+                <div data-slot="warning" style="color: var(--danger); font-weight: 600; margin: 1rem 0;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-action="cancel">Cancel</button>
+                <button class="btn" data-action="confirm" data-slot="confirm-btn"></button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-full-petition-modal">
+    <div class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="modal-header" style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--text-primary);">Your Petition Submission</h3>
+                <button data-action="close" style="background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0.25rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.25rem; overflow-y: auto; flex: 1;">
+                <pre data-slot="petition-text" style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; color: var(--text-primary); line-height: 1.6; margin: 0; background: var(--bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);"></pre>
+            </div>
+            <div class="modal-footer" style="padding: 1rem 1.25rem; border-top: 1px solid var(--border);">
+                <button class="btn btn-secondary" data-action="close">Close</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ============================================ -->
+<!-- PROFILE MODAL TEMPLATE -->
+<!-- ============================================ -->
+
+<template id="tpl-profile-modal">
+    <div class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Your Profile</h2>
+                <button class="modal-close" data-action="close">×</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; border: 2px solid var(--border);">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3 data-slot="username" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;"></h3>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    <span data-slot="unique-id" style="font-family: monospace; font-size: 0.9rem;"></span>
+                    <button data-action="copy-id" class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Copy</button>
+                </div>
+                <div style="text-align: left; background: var(--bg); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <span style="color: var(--text-secondary);">Proposals Voted</span>
+                        <span data-slot="votes-count" style="font-weight: 600;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <span style="color: var(--text-secondary);">Petitions Submitted</span>
+                        <span data-slot="petitions-count" style="font-weight: 600;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">Member Since</span>
+                        <span data-slot="member-since" style="font-weight: 600;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-action="close">Close</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ============================================ -->
+<!-- ICON SVG TEMPLATES -->
+<!-- ============================================ -->
+
+<template id="tpl-icon-copy">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+        <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+    </svg>
+</template>
+
+<template id="tpl-icon-close">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+</template>

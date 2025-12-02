@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proposal Details</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    // Apply saved theme before page renders to prevent flash
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div style="margin-bottom:1.5rem;">
+        <h1 style="font-size:2rem;margin-bottom:0.5rem;" id="pageTitle">Proposal Details</h1>
+        <a href="#" id="backLink" style="color:var(--text-secondary);text-decoration:none;font-size:0.9rem;transition:color 0.2s;" 
+           onmouseover="this.style.color='var(--text-primary)'" 
+           onmouseout="this.style.color='var(--text-secondary)'">← Back to Dashboard</a>
+      </div>
+    </header>
+
+    <main>
+      <section id="proposalArea" class="proposal-details">
+        <div class="loader-container">
+          <div class="loader"></div>
+          <p>Loading proposal...</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>ProposalAnalyst · Powered by OpenAI & spaCy</p>
+    </footer>
+  </div>
+
+<script>
+// Extract proposal ID from URL path (/proposal/:id)
+const pathParts = window.location.pathname.split('/');
+const proposalId = parseInt(pathParts[pathParts.length - 1]);
+const area = document.getElementById('proposalArea');
+const API_BASE_URL = 'http://localhost:3001/api';
+const urlParams = new URLSearchParams(window.location.search);
+const isPetitionMode = urlParams.get('mode') === 'petition';
+const isViewPetitionMode = urlParams.get('mode') === 'view_petition';
+const currentUser = sessionStorage.getItem('username');
+
+// Check if user is logged in, if not redirect to home
+if (!sessionStorage.getItem('isLoggedIn')) {
+  window.location.href = '/';
+}
+
+// Setup context-aware back button
+const backLink = document.getElementById('backLink');
+const viewSource = sessionStorage.getItem('proposalViewSource');
+const orgContext = sessionStorage.getItem('orgContext'); // Organization context for Task 4
+const urlSource = urlParams.get('source'); // URL source param (takes priority)
+const viewLabels = {
+  voted: 'Voted Proposals',
+  bookmarked: 'Bookmarked Proposals',
+  petitioned: 'My Petitions'
+};
+
+// Map URL source to tab labels
+const sourceLabels = {
+  home: 'Dashboard',
+  past: 'Past Proposals',
+  petition: 'Petition Proposals'
+};
+
+// Priority: view_petition mode > URL source param > orgContext > viewSource > currentTab
+if (isViewPetitionMode) {
+  backLink.textContent = `← Back to My Petitions`;
+} else if (urlSource && viewLabels[urlSource]) {
+  // User view sources (voted, bookmarked, petitioned)
+  backLink.textContent = `← Back to ${viewLabels[urlSource]}`;
+} else if (urlSource && sourceLabels[urlSource]) {
+  // Tab sources (home, past, petition)
+  backLink.textContent = `← Back to ${sourceLabels[urlSource]}`;
+} else if (orgContext) {
+  try {
+    const org = JSON.parse(orgContext);
+    backLink.textContent = `← Back to ${org.name}`;
+  } catch (e) {
+    console.warn('Failed to parse orgContext:', e);
+  }
+} else if (viewSource && viewLabels[viewSource]) {
+  backLink.textContent = `← Back to ${viewLabels[viewSource]}`;
+}
+
+backLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  navigateBack();
+});
+
+// Helper function for context-aware navigation back
+function navigateBack() {
+  // Priority: view_petition mode > URL source param > orgContext > viewSource > currentTab
+  
+  // 0. View petition mode - always go back to My Petitions
+  if (isViewPetitionMode) {
+    window.location.href = `/dashboard/petitioned`;
+    return;
+  }
+  
+  // 1. URL source param - check if it's a user view (voted, bookmarked, petitioned)
+  if (urlSource && viewLabels[urlSource]) {
+    window.location.href = `/dashboard/${urlSource}`;
+    return;
+  }
+  
+  // 2. URL source param - check if it's a tab (home, past, petition)
+  if (urlSource && sourceLabels[urlSource]) {
+    window.location.href = `/dashboard/${urlSource === 'home' ? '' : urlSource}`;
+    return;
+  }
+  
+  // 3. Organization context (from org view)
+  if (orgContext) {
+    try {
+      const org = JSON.parse(orgContext);
+      // Navigate back to dashboard and show organization details
+      window.location.href = `/dashboard/organization/${org.id}`;
+    } catch (e) {
+      console.warn('Failed to parse orgContext:', e);
+      window.location.href = '/dashboard';
+    }
+    return;
+  }
+  
+  // 3. User proposals view (voted, bookmarked, petitioned)
+  if (viewSource && viewLabels[viewSource]) {
+    // Navigate back to dashboard and trigger the user proposals view
+    window.location.href = `/dashboard/${viewSource}`;
+  } else {
+    // 4. Default: go back to the current tab
+    const returnTab = sessionStorage.getItem('currentTab') || 'home';
+    window.location.href = `/dashboard/${returnTab === 'home' ? '' : returnTab}`;
+  }
+}
+
+if (isPetitionMode) {
+  document.getElementById('pageTitle').textContent = 'Petition Proposal';
+} else if (isViewPetitionMode) {
+  document.getElementById('pageTitle').textContent = 'View Your Petition';
+}
+
+async function loadProposal(){
+  try{
+    const resp = await fetch(`${API_BASE_URL}/proposals/${proposalId}`);
+    const data = await resp.json();
+    if(!resp.ok) throw new Error(data.error||'Failed to load proposal');
+    
+    // Check voting permissions for organization proposals
+    let canVote = true;
+    let voteRestrictionReason = null;
+    let isProposalRestricted = false; // Whether proposal has restricted voting (not ALL)
+    let hasAlreadyVoted = false;
+    
+    // Check if proposal has restricted voting based on allowed_voters field
+    if (data.proposal.allowed_voters && data.proposal.allowed_voters !== 'ALL') {
+      isProposalRestricted = true;
+    }
+    
+    if (data.proposal.organization_id && currentUser) {
+      try {
+        const permResp = await fetch(`${API_BASE_URL}/votes/${proposalId}/can-vote/${currentUser}`);
+        const permData = await permResp.json();
+        console.log('DEBUG - Permission API response:', permData);
+        console.log('DEBUG - currentUser:', currentUser);
+        if (permData.success) {
+          canVote = permData.can_vote;
+          voteRestrictionReason = permData.reason;
+          hasAlreadyVoted = permData.already_voted || false;
+          // Also check restricted flag from API - this means user is NOT in allowed voters
+          if (permData.restricted) {
+            isProposalRestricted = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not check voting permissions:', e);
+      }
+    }
+    
+    console.log('DEBUG - Final state:', { canVote, isProposalRestricted, hasAlreadyVoted, voteRestrictionReason });
+    
+    // If view_petition mode, also fetch user's petition
+    let userPetition = null;
+    if (isViewPetitionMode && currentUser) {
+      try {
+        const petitionResp = await fetch(`${API_BASE_URL}/proposals/${proposalId}/my-petition?username=${currentUser}`);
+        const petitionData = await petitionResp.json();
+        if (petitionData.success && petitionData.petition) {
+          userPetition = petitionData.petition;
+        }
+      } catch (e) {
+        console.warn('Could not fetch user petition:', e);
+      }
+    }
+    
+    renderProposal(data.proposal, canVote, voteRestrictionReason, userPetition, isProposalRestricted, hasAlreadyVoted);
+  }catch(e){ 
+    area.innerHTML = '<div class="card"><p style="color:var(--danger)">Error loading proposal: '+e.message+'</p></div>'; 
+  }
+}
+
+function renderProposal(proposal, canVote = true, voteRestrictionReason = null, userPetition = null, isProposalRestricted = false, hasAlreadyVoted = false){
+  // Determine if this is a past proposal
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const decisionDate = proposal.decision_date ? new Date(proposal.decision_date) : null;
+  if (decisionDate) decisionDate.setHours(0, 0, 0, 0);
+  const isPast = decisionDate && decisionDate < today;
+  
+  if (isViewPetitionMode && userPetition) {
+    // View Petition mode - show proposal with user's petition and update option
+    const petitionDate = new Date(userPetition.updated_at || userPetition.created_at);
+    const isEdited = userPetition.updated_at && new Date(userPetition.updated_at) > new Date(userPetition.created_at);
+    const timestampText = petitionDate.toLocaleString() + (isEdited ? ' (edited)' : '');
+    
+    area.innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+          <h2 style="font-size:1.5rem;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;">${proposal.title}</h2>
+          <button id="bookmarkBtn" class="action-btn bookmark-btn" onclick="toggleBookmark(${proposal.id})" title="Bookmark" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V21L12 17.5L5 21V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="meta-row" style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+          <div class="meta-item"><strong>Decision:</strong> ${proposal.decision_date||'N/A'}</div>
+          <div class="meta-item"><strong>Organization:</strong> ${proposal.creator||'N/A'}</div>
+          ${proposal.authorized_by ? '<div class="meta-item"><strong>Authorized by:</strong> '+proposal.authorized_by+'</div>' : ''}
+        </div>
+        <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Original Proposal</h3>
+        <div class="proposal-text" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);line-height:1.8;white-space:pre-wrap;margin-bottom:1.5rem;">${proposal.original_text}</div>
+        
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:2rem;">
+          <button id="showAISummary" class="btn btn-primary">AI Summary</button>
+          <button id="regenerateSummary" class="btn btn-secondary" style="display:none;">Regenerate Summary</button>
+        </div>
+        
+        <div id="analysisContainer" style="display:none;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);">
+          <div class="loader-container" id="analysisLoader">
+            <div class="loader"></div>
+            <p>Generating AI analysis...</p>
+          </div>
+          <div id="analysisContent" style="display:none;">
+            <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Neutral Summary</h3>
+            <div id="neutralSummary" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);line-height:1.8;margin-bottom:1.5rem;"></div>
+            
+            <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Objective Facts</h3>
+            <pre id="objectiveFacts" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);overflow-x:auto;line-height:1.6;"></pre>
+          </div>
+        </div>
+        
+        <div style="padding-top:2rem;border-top:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3 style="font-size:1.125rem;font-weight:600;color:var(--text-primary);">Your Petition</h3>
+            <span style="font-size:0.85rem;color:var(--text-muted);">Submitted: ${timestampText}</span>
+          </div>
+          <textarea id="petitionText" 
+                    style="width:100%;min-height:200px;padding:1rem;background:var(--bg);color:var(--text-primary);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.95rem;line-height:1.6;resize:vertical;">${userPetition.petition_text}</textarea>
+          <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <button id="updatePetition" class="btn btn-primary">Update Petition</button>
+            <button id="viewProposalNormal" class="btn btn-secondary">View Full Proposal</button>
+            <button id="deletePetition" class="btn btn-danger" style="background:var(--danger);border-color:var(--danger);">Delete Petition</button>
+          </div>
+          <div id="petitionMessage" style="margin-top:1rem;padding:1rem;border-radius:10px;display:none;"></div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('updatePetition').addEventListener('click', () => updatePetition(userPetition.id));
+    document.getElementById('viewProposalNormal').addEventListener('click', () => {
+      window.location.href = `/proposal/${proposalId}`;
+    });
+    document.getElementById('deletePetition').addEventListener('click', () => deletePetition(userPetition.id));
+    
+    // AI Summary handlers
+    document.getElementById('showAISummary').addEventListener('click', () => loadAIAnalysis(proposal.id, false));
+    document.getElementById('regenerateSummary').addEventListener('click', () => {
+      if(confirm('Regenerate AI summary? This will create a new analysis.')) {
+        loadAIAnalysis(proposal.id, true);
+      }
+    });
+    
+    // Check if analysis already exists
+    checkExistingAnalysis(proposal.id);
+    
+    checkBookmarkStatus(proposal.id);
+  } else if (isPetitionMode) {
+    // Petition mode - show proposal and petition form only
+    area.innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+          <h2 style="font-size:1.5rem;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;">${proposal.title}</h2>
+          <button id="bookmarkBtn" class="action-btn bookmark-btn" onclick="toggleBookmark(${proposal.id})" title="Bookmark" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V21L12 17.5L5 21V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="meta-row" style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+          <div class="meta-item"><strong>Decision:</strong> ${proposal.decision_date||'N/A'}</div>
+          <div class="meta-item"><strong>Organization:</strong> ${proposal.creator||'N/A'}</div>
+          ${proposal.authorized_by ? '<div class="meta-item"><strong>Authorized by:</strong> '+proposal.authorized_by+'</div>' : ''}
+        </div>
+        <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Original Proposal</h3>
+        <div class="proposal-text" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);line-height:1.8;white-space:pre-wrap;margin-bottom:1.5rem;">${proposal.original_text}</div>
+        
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:2rem;">
+          <button id="showAISummary" class="btn btn-primary">AI Summary</button>
+          <button id="regenerateSummary" class="btn btn-secondary" style="display:none;">Regenerate Summary</button>
+        </div>
+        
+        <div id="analysisContainer" style="display:none;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);">
+          <div class="loader-container" id="analysisLoader">
+            <div class="loader"></div>
+            <p>Generating AI analysis...</p>
+          </div>
+          <div id="analysisContent" style="display:none;">
+            <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Neutral Summary</h3>
+            <div id="neutralSummary" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);line-height:1.8;margin-bottom:1.5rem;"></div>
+            
+            <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Objective Facts</h3>
+            <pre id="objectiveFacts" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);overflow-x:auto;line-height:1.6;"></pre>
+          </div>
+        </div>
+        
+        <div style="padding-top:2rem;border-top:1px solid var(--border);">
+          <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Submit Anonymous Modification Request</h3>
+          <p style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.95rem;">Suggest changes or modifications to this proposal. Your submission will be anonymous.</p>
+          <textarea id="petitionText" 
+                    style="width:100%;min-height:200px;padding:1rem;background:var(--bg);color:var(--text-primary);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.95rem;line-height:1.6;resize:vertical;" 
+                    placeholder="Describe your proposed modifications or concerns..."></textarea>
+          <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+            <button id="submitPetition" class="btn btn-primary">Submit Petition</button>
+            <button id="cancelPetition" class="btn btn-secondary">Cancel</button>
+          </div>
+          <div id="petitionMessage" style="margin-top:1rem;padding:1rem;border-radius:10px;display:none;"></div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('submitPetition').addEventListener('click', submitPetition);
+    document.getElementById('cancelPetition').addEventListener('click', () => {
+      navigateBack();
+    });
+    
+    // AI Summary handlers
+    document.getElementById('showAISummary').addEventListener('click', () => loadAIAnalysis(proposal.id, false));
+    document.getElementById('regenerateSummary').addEventListener('click', () => {
+      if(confirm('Regenerate AI summary? This will create a new analysis.')) {
+        loadAIAnalysis(proposal.id, true);
+      }
+    });
+    
+    // Check if analysis already exists
+    checkExistingAnalysis(proposal.id);
+    
+    // Check bookmark status for petition mode too
+    checkBookmarkStatus(proposal.id);
+  } else {
+    // Normal mode - show proposal with conditional voting/results based on past status
+    
+    // Show "Restricted Voting" tag for EVERYONE if proposal has restricted permissions (not ALL)
+    // This tag is shown regardless of whether the current user can vote or not
+    const restrictedTagHtml = isProposalRestricted ? `
+      <span style="display:inline-flex;align-items:center;background:rgba(251, 191, 36, 0.15);color:#d97706;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
+        Restricted Voting
+      </span>
+    ` : '';
+    
+    // Only show vote counts for PAST proposals (voting closed)
+    let voteStatusHtml = '';
+    if (isPast) {
+      const isTied = proposal.yes_count === proposal.no_count;
+      const isZeroVotes = !proposal.total_votes || proposal.total_votes === 0;
+      const needsRecast = isTied || isZeroVotes;
+      
+      if (needsRecast) {
+        voteStatusHtml = `
+          <div style="margin-top:1rem;padding:1.5rem;background:rgba(107,114,128,0.1);border-radius:10px;border:1px solid rgba(107,114,128,0.2);">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+              <span style="display:inline-block;padding:0.25rem 0.75rem;background:rgba(107,114,128,0.2);color:#6b7280;border-radius:9999px;font-size:0.75rem;font-weight:600;text-transform:uppercase;">Recast Required</span>
+            </div>
+            <p style="color:#6b7280;margin:0;">${isZeroVotes ? 'No votes were cast on this proposal. It must be recast for a new vote.' : 'The votes were tied. This proposal must be recast for a new vote.'}</p>
+            ${proposal.total_votes > 0 ? `<div style="margin-top:1rem;display:flex;gap:2rem;align-items:center;flex-wrap:wrap;"><span style="color:#6b7280;">${proposal.yes_count} Approve</span><span style="color:#6b7280;">${proposal.no_count} Deny</span></div>` : ''}
+          </div>
+        `;
+      } else if (proposal.total_votes > 0) {
+        voteStatusHtml = `
+          <div style="margin-top:1rem;padding:1.5rem;background:var(--bg);border-radius:10px;border:1px solid var(--border);">
+            <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Final Results</h3>
+            <div style="display:flex;gap:2rem;align-items:center;flex-wrap:wrap;">
+              <span style="color:#10b981;font-size:1.125rem;font-weight:600;">${proposal.yes_count} Approve</span>
+              <span style="color:#ef4444;font-size:1.125rem;font-weight:600;">${proposal.no_count} Deny</span>
+              <span style="color:var(--text-secondary);">Total Votes: ${proposal.total_votes}</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // Show voting buttons only for ongoing proposals (not past)
+    let votingButtonsHtml;
+    if (isPast) {
+      votingButtonsHtml = `
+        <div style="padding:1rem;background:rgba(107,114,128,0.1);border-radius:10px;border:1px solid rgba(107,114,128,0.2);color:#6b7280;margin-bottom:1rem;">
+          <strong>Voting Closed:</strong> This proposal's decision date has passed.
+        </div>
+      `;
+    } else if (hasAlreadyVoted) {
+      // User has already voted - this is separate from restriction
+      votingButtonsHtml = `
+        <div style="padding:1rem;background:rgba(16, 185, 129, 0.1);border-radius:10px;border:1px solid rgba(16, 185, 129, 0.3);color:#059669;margin-bottom:1rem;">
+          <strong>Vote Recorded:</strong> You have already voted on this proposal.
+        </div>
+        <div id="voteMessage" style="margin-bottom:1rem;padding:1rem;border-radius:10px;display:none;"></div>
+      `;
+    } else if (!canVote && isProposalRestricted) {
+      // User is restricted from voting - show grayed out buttons with message
+      votingButtonsHtml = `
+        <div style="padding:1rem;background:rgba(107,114,128,0.1);border-radius:10px;border:1px solid rgba(107,114,128,0.2);color:#6b7280;margin-bottom:1rem;">
+          You do not have permission to vote on this proposal.
+        </div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <button disabled class="btn" style="background:#9ca3af;color:white;cursor:not-allowed;opacity:0.6;">Approve</button>
+          <button disabled class="btn" style="background:#9ca3af;color:white;cursor:not-allowed;opacity:0.6;">Deny</button>
+        </div>
+        <div id="voteMessage" style="margin-bottom:1rem;padding:1rem;border-radius:10px;display:none;"></div>
+      `;
+    } else if (!canVote && voteRestrictionReason) {
+      // Other restriction reasons (not a member, etc.)
+      votingButtonsHtml = `
+        <div style="padding:1rem;background:rgba(107,114,128,0.1);border-radius:10px;border:1px solid rgba(107,114,128,0.2);color:#6b7280;margin-bottom:1rem;">
+          ${voteRestrictionReason}
+        </div>
+        <div id="voteMessage" style="margin-bottom:1rem;padding:1rem;border-radius:10px;display:none;"></div>
+      `;
+    } else {
+      votingButtonsHtml = `
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <button id="approveBtn" class="btn" style="background:#10b981;color:white;">Approve</button>
+          <button id="denyBtn" class="btn" style="background:#ef4444;color:white;">Deny</button>
+        </div>
+        <div id="voteMessage" style="margin-bottom:1rem;padding:1rem;border-radius:10px;display:none;"></div>
+      `;
+    }
+    
+    area.innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <h2 style="font-size:1.5rem;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;">${proposal.title}</h2>
+            ${restrictedTagHtml}
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+            <button id="petitionBtn" onclick="goToPetition(${proposal.id})" title="Petition this proposal" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13M18.5 2.5C19.3284 1.67157 20.6716 1.67157 21.5 2.5C22.3284 3.32843 22.3284 4.67157 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button id="bookmarkBtn" onclick="toggleBookmark(${proposal.id})" title="Bookmark" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V21L12 17.5L5 21V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="meta-row" style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);display:flex;gap:1.5rem;flex-wrap:wrap;">
+          <div class="meta-item"><strong>Decision:</strong> ${proposal.decision_date||'N/A'}</div>
+          <div class="meta-item"><strong>Organization:</strong> ${proposal.creator||'N/A'}</div>
+          ${proposal.authorized_by ? '<div class="meta-item"><strong>Authorized by:</strong> '+proposal.authorized_by+'</div>' : ''}
+        </div>
+        
+        ${voteStatusHtml}
+        
+        <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;margin-top:1.5rem;color:var(--text-primary);">Original Proposal</h3>
+        <div class="proposal-text" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);line-height:1.8;white-space:pre-wrap;margin-bottom:1.5rem;">${proposal.original_text}</div>
+        
+        ${votingButtonsHtml}
+        
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <button id="showAISummary" class="btn btn-primary">AI Summary</button>
+          <button id="regenerateSummary" class="btn btn-secondary" style="display:none;">Regenerate Summary</button>
+        </div>
+        
+        <div id="analysisContainer" style="display:none;margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border);">
+          <div class="loader-container" id="analysisLoader">
+            <div class="loader"></div>
+            <p>Generating AI analysis...</p>
+          </div>
+          <div id="analysisContent" style="display:none;">
+            <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Neutral Summary</h3>
+            <div id="neutralSummary" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);line-height:1.8;margin-bottom:1.5rem;"></div>
+            
+            <h3 style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text-primary);">Objective Facts</h3>
+            <pre id="objectiveFacts" style="background:var(--bg);padding:1.5rem;border-radius:10px;border:1px solid var(--border);overflow-x:auto;line-height:1.6;"></pre>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Only attach voting event listeners if not a past proposal and user can vote
+    if (!isPast && canVote) {
+      const approveBtn = document.getElementById('approveBtn');
+      const denyBtn = document.getElementById('denyBtn');
+      if (approveBtn) approveBtn.addEventListener('click', () => submitVote('approve'));
+      if (denyBtn) denyBtn.addEventListener('click', () => submitVote('deny'));
+      // Check if user has already voted
+      checkUserVote(proposal.id);
+    }
+    
+    document.getElementById('showAISummary').addEventListener('click', () => loadAIAnalysis(proposal.id, false));
+    document.getElementById('regenerateSummary').addEventListener('click', () => {
+      if(confirm('Regenerate AI summary? This will create a new analysis.')) {
+        loadAIAnalysis(proposal.id, true);
+      }
+    });
+    
+    // Check if analysis already exists for this user
+    checkExistingAnalysis(proposal.id);
+    
+    // Check bookmark status
+    checkBookmarkStatus(proposal.id);
+  }
+}
+
+// Toggle bookmark status
+async function toggleBookmark(proposalId) {
+  const username = currentUser || sessionStorage.getItem('username');
+  if (!username) {
+    alert('Please log in to bookmark proposals');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/by-username/${username}/bookmarks/${proposalId}/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to toggle bookmark');
+    }
+
+    const result = await response.json();
+    updateBookmarkButton(result.bookmarked);
+  } catch (error) {
+    console.error('Error toggling bookmark:', error);
+    alert('Failed to update bookmark');
+  }
+}
+
+// Check if proposal is bookmarked
+async function checkBookmarkStatus(proposalId) {
+  const username = currentUser || sessionStorage.getItem('username');
+  if (!username) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/by-username/${username}/bookmarks/${proposalId}`);
+    const data = await response.json();
+    if (data.success) {
+      updateBookmarkButton(data.isBookmarked);
+    }
+  } catch (error) {
+    console.error('Error checking bookmark status:', error);
+  }
+}
+
+// Update bookmark button visual state
+function updateBookmarkButton(isBookmarked) {
+  const btn = document.getElementById('bookmarkBtn');
+  if (!btn) return;
+  
+  const svg = btn.querySelector('svg path');
+  if (isBookmarked) {
+    btn.style.color = '#fbbf24';
+    btn.style.borderColor = '#fbbf24';
+    btn.style.background = 'rgba(251, 191, 36, 0.1)';
+    svg.setAttribute('fill', 'currentColor');
+  } else {
+    btn.style.color = 'var(--text-muted)';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--surface)';
+    svg.setAttribute('fill', 'none');
+  }
+}
+
+// Navigate to petition mode
+function goToPetition(proposalId) {
+  window.location.href = `/proposal/${proposalId}?mode=petition`;
+}
+
+async function submitPetition() {
+  const text = document.getElementById('petitionText').value.trim();
+  const msgDiv = document.getElementById('petitionMessage');
+  
+  if (!text) {
+    msgDiv.textContent = 'Please enter your modification request.';
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+    msgDiv.style.color = 'var(--danger)';
+    msgDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    return;
+  }
+  
+  const btn = document.getElementById('submitPetition');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  
+  try {
+    const resp = await fetch(`${API_BASE_URL}/proposals/${proposalId}/petition`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        petition_text: text,
+        username: currentUser
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (resp.ok && data.success) {
+      msgDiv.textContent = 'Petition submitted successfully! Redirecting...';
+      msgDiv.style.display = 'block';
+      msgDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+      msgDiv.style.color = 'var(--success)';
+      msgDiv.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+      
+      setTimeout(() => {
+        navigateBack();
+      }, 2000);
+    } else {
+      throw new Error(data.error || 'Submission failed');
+    }
+  } catch (e) {
+    msgDiv.textContent = 'Error: ' + e.message;
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+    msgDiv.style.color = 'var(--danger)';
+    msgDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    btn.disabled = false;
+    btn.textContent = 'Submit Petition';
+  }
+}
+
+// Update existing petition
+async function updatePetition(petitionId) {
+  const text = document.getElementById('petitionText').value.trim();
+  const msgDiv = document.getElementById('petitionMessage');
+  
+  if (!text) {
+    msgDiv.textContent = 'Please enter your modification request.';
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+    msgDiv.style.color = 'var(--danger)';
+    msgDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    return;
+  }
+  
+  const btn = document.getElementById('updatePetition');
+  btn.disabled = true;
+  btn.textContent = 'Updating...';
+  
+  try {
+    const resp = await fetch(`${API_BASE_URL}/proposals/${proposalId}/petition`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        petition_text: text,
+        petition_id: petitionId,
+        username: currentUser
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (resp.ok && data.success) {
+      msgDiv.textContent = 'Petition updated successfully!';
+      msgDiv.style.display = 'block';
+      msgDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+      msgDiv.style.color = 'var(--success)';
+      msgDiv.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+      btn.disabled = false;
+      btn.textContent = 'Update Petition';
+      
+      // Reload to show updated timestamp
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      throw new Error(data.error || 'Update failed');
+    }
+  } catch (e) {
+    msgDiv.textContent = 'Error: ' + e.message;
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+    msgDiv.style.color = 'var(--danger)';
+    msgDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    btn.disabled = false;
+    btn.textContent = 'Update Petition';
+  }
+}
+
+// Delete existing petition
+async function deletePetition(petitionId) {
+  if (!confirm('Are you sure you want to delete this petition? This action cannot be undone.')) {
+    return;
+  }
+  
+  const msgDiv = document.getElementById('petitionMessage');
+  const btn = document.getElementById('deletePetition');
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  
+  try {
+    const resp = await fetch(`${API_BASE_URL}/proposals/${proposalId}/petition`, {
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        petition_id: petitionId,
+        username: currentUser
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (resp.ok && data.success) {
+      msgDiv.textContent = 'Petition deleted successfully! Redirecting...';
+      msgDiv.style.display = 'block';
+      msgDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+      msgDiv.style.color = 'var(--success)';
+      msgDiv.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+      
+      // Navigate back to petitioned list
+      setTimeout(() => {
+        window.location.href = '/dashboard/petitioned';
+      }, 1500);
+    } else {
+      throw new Error(data.error || 'Delete failed');
+    }
+  } catch (e) {
+    msgDiv.textContent = 'Error: ' + e.message;
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+    msgDiv.style.color = 'var(--danger)';
+    msgDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    btn.disabled = false;
+    btn.textContent = 'Delete Petition';
+  }
+}
+
+// Check if user already has cached analysis
+async function checkExistingAnalysis(proposalId) {
+  try {
+    const resp = await fetch(`${API_BASE_URL}/analysis/${proposalId}/${currentUser}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.success && data.analysis) {
+        // Show regenerate button since analysis exists
+        document.getElementById('regenerateSummary').style.display = 'inline-block';
+        // Update AI Summary button to show cached status
+        const showBtn = document.getElementById('showAISummary');
+        if (showBtn) showBtn.textContent = 'AI Summary (Cached)';
+      }
+    }
+  } catch (e) {
+    // No cached analysis, that's fine
+  }
+}
+
+// Load AI analysis (with optional regenerate)
+async function loadAIAnalysis(proposalId, forceRegenerate = false) {
+  const container = document.getElementById('analysisContainer');
+  const loader = document.getElementById('analysisLoader');
+  const content = document.getElementById('analysisContent');
+  const showBtn = document.getElementById('showAISummary');
+  const regenBtn = document.getElementById('regenerateSummary');
+  
+  container.style.display = 'block';
+  loader.style.display = 'flex';
+  content.style.display = 'none';
+  showBtn.disabled = true;
+  regenBtn.disabled = true;
+  
+  try {
+    // First check if cached analysis exists (unless forcing regeneration)
+    if (!forceRegenerate) {
+      const cacheResp = await fetch(`${API_BASE_URL}/analysis/${proposalId}/${currentUser}`);
+      if (cacheResp.ok) {
+        const cacheData = await cacheResp.json();
+        if (cacheData.success && cacheData.analysis) {
+          displayAnalysis(cacheData.analysis);
+          regenBtn.style.display = 'inline-block';
+          showBtn.disabled = false;
+          regenBtn.disabled = false;
+          return;
+        }
+      }
+    }
+    
+    // Generate new analysis
+    const resp = await fetch(`${API_BASE_URL}/analysis/generate`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        proposal_id: proposalId,
+        username: currentUser
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (!resp.ok) {
+      throw new Error(data.error || 'Analysis generation failed');
+    }
+    
+    displayAnalysis(data.analysis);
+    regenBtn.style.display = 'inline-block';
+  } catch (e) {
+    content.innerHTML = `<p style="color:var(--danger);padding:1rem;">Error: ${e.message}</p>`;
+    content.style.display = 'block';
+  } finally {
+    loader.style.display = 'none';
+    showBtn.disabled = false;
+    regenBtn.disabled = false;
+  }
+}
+
+function displayAnalysis(analysis) {
+  const loader = document.getElementById('analysisLoader');
+  const content = document.getElementById('analysisContent');
+  
+  loader.style.display = 'none';
+  content.style.display = 'block';
+  
+  document.getElementById('neutralSummary').textContent = analysis.neutral_summary || 'No summary available';
+  document.getElementById('objectiveFacts').textContent = JSON.stringify(analysis.objective_facts || {}, null, 2);
+}
+
+// Check if user has already voted
+async function checkUserVote(proposalId) {
+  try {
+    const resp = await fetch(`${API_BASE_URL}/votes/${proposalId}/user/${currentUser}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.success && data.has_voted) {
+        // User has already voted - disable buttons and show message
+        const approveBtn = document.getElementById('approveBtn');
+        const denyBtn = document.getElementById('denyBtn');
+        const msgDiv = document.getElementById('voteMessage');
+        
+        if (approveBtn) approveBtn.disabled = true;
+        if (denyBtn) denyBtn.disabled = true;
+        
+        msgDiv.textContent = `You have already voted: ${data.vote === 'approve' ? 'Approved' : 'Denied'}`;
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = 'rgba(59, 130, 246, 0.1)';
+        msgDiv.style.color = 'var(--primary)';
+        msgDiv.style.border = '1px solid rgba(59, 130, 246, 0.2)';
+      }
+    }
+  } catch (e) {
+    // Error checking vote status, ignore
+  }
+}
+
+// Submit a vote
+async function submitVote(vote) {
+  const msgDiv = document.getElementById('voteMessage');
+  const approveBtn = document.getElementById('approveBtn');
+  const denyBtn = document.getElementById('denyBtn');
+  
+  approveBtn.disabled = true;
+  denyBtn.disabled = true;
+  
+  try {
+    const resp = await fetch(`${API_BASE_URL}/votes/submit`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        proposal_id: proposalId,
+        username: currentUser,
+        vote: vote
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (resp.ok && data.success) {
+      msgDiv.textContent = `Vote recorded: ${vote === 'approve' ? 'Approved' : 'Denied'}`;
+      msgDiv.style.display = 'block';
+      msgDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+      msgDiv.style.color = 'var(--success)';
+      msgDiv.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+      
+      // Reload proposal to show updated vote counts
+      setTimeout(() => {
+        loadProposal();
+      }, 1500);
+    } else {
+      throw new Error(data.error || 'Vote submission failed');
+    }
+  } catch (e) {
+    msgDiv.textContent = 'Error: ' + e.message;
+    msgDiv.style.display = 'block';
+    msgDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+    msgDiv.style.color = 'var(--danger)';
+    msgDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    
+    approveBtn.disabled = false;
+    denyBtn.disabled = false;
+  }
+}
+
+loadProposal();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProposalAnalyst - Review & Vote</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        // Apply saved theme before page renders to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <div class="login-card">
+                <h1>ProposalAnalyst</h1>
+                <p class="login-subtitle">Proposal Review System</p>
+                
+                <div class="login-form">
+                    <div id="loginError" class="error-message" style="display: none;"></div>
+                    
+                    <input 
+                        type="text" 
+                        id="usernameInput" 
+                        placeholder="Username or Email"
+                        class="login-input"
+                        autocomplete="username"
+                    />
+                    <input 
+                        type="password" 
+                        id="passwordInput" 
+                        placeholder="Password"
+                        class="login-input"
+                        autocomplete="current-password"
+                    />
+                    <button id="loginBtn" class="btn btn-primary">
+                        <span class="btn-text">Login</span>
+                    </button>
+                    
+                    <div class="login-divider">
+                        <span>Don't have an account?</span>
+                    </div>
+                    
+                    <a href="/signup" class="btn btn-secondary">Create Account</a>
+                </div>
+                
+                <p class="login-note">Secure login with encrypted credentials</p>
+            </div>
+        </div>
+
+        <!-- Main App (hidden until logged in) -->
+        <div id="mainApp" style="display: none;">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <div>
+                        <h1>Glass Ballot</h1>
+                        <p class="subtitle">Review and vote on proposals</p>
+                    </div>
+                    <div class="user-info">
+                        <span id="currentUser"></span>
+                        <button id="logoutBtn" class="btn btn-secondary btn-sm">Logout</button>
+                    </div>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs">
+                    <button class="tab active" data-filter="home">Home</button>
+                    <button class="tab" data-filter="past">Past Proposals</button>
+                    <button class="tab" data-filter="petition">Petition Proposal</button>
+                </div>
+            </header>
+
+            <!-- Proposals List -->
+            <section class="proposals-section">
+                <div id="proposalsList" class="proposals-list">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p>Loading proposals...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Petition Section (hidden by default) -->
+            <section id="petitionSection" class="proposals-section" style="display: none;">
+                <div id="petitionList" class="proposals-list"></div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>ProposalAnalyst · Powered by OpenAI & spaCy</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

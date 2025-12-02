@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GlassBallots</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        // Apply saved theme before page renders to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1 id="headerTitle" style="cursor: pointer;">Glass Ballots</h1>
+                    <p class="subtitle">Review and vote on proposals</p>
+                </div>
+                <div class="user-info">
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <button class="profile-btn" id="profileBtn">
+                            <span id="currentUser"></span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <div class="profile-menu" id="profileMenu">
+                            <div class="profile-menu-header">
+                                <span class="profile-label">Settings</span>
+                            </div>
+                            <div class="profile-menu-items">
+                                <button class="profile-menu-item" id="viewProfile">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>Profile</span>
+                                </button>
+                                <div class="profile-menu-divider"></div>
+                                <button class="profile-menu-item" id="viewVotedProposals">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>Voted Proposals</span>
+                                </button>
+                                <button class="profile-menu-item" id="viewBookmarkedProposals">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M5 5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V21L12 17.5L5 21V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>Bookmarked Proposals</span>
+                                </button>
+                                <button class="profile-menu-item" id="viewPetitionedProposals">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M11 4H4C3.44772 4 3 4.44772 3 5V20C3 20.5523 3.44772 21 4 21H19C19.5523 21 20 20.5523 20 20V13M18.5 2.5C19.3284 1.67157 20.6716 1.67157 21.5 2.5C22.3284 3.32843 22.3284 4.67157 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>My Petitions</span>
+                                </button>
+                                <div class="profile-menu-divider"></div>
+                                <button class="profile-menu-item" id="viewMyOrganizations">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>My Organizations</span>
+                                </button>
+                                <button class="profile-menu-item" id="createNewOrganization">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>Create Organization</span>
+                                </button>
+                                <div class="profile-menu-divider"></div>
+                                <div class="profile-menu-item theme-toggle">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="themeIcon">
+                                        <path d="M12 3V4M12 20V21M4 12H3M6.31412 6.31412L5.5 5.5M17.6859 6.31412L18.5 5.5M6.31412 17.69L5.5 18.5M17.6859 17.69L18.5 18.5M21 12H20M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>Light Mode</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="themeToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="profile-menu-divider"></div>
+                                <button class="profile-menu-item logout-item" id="logoutBtn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs (outside header for sticky to work) -->
+        <div class="nav-tabs">
+            <div class="tabs-left">
+                <button class="tab active" data-filter="home">Home</button>
+                <button class="tab" data-filter="past">Past Proposals</button>
+                <button class="tab" data-filter="petition">Petition Proposal</button>
+                <button class="tab" data-filter="search">Search</button>
+            </div>
+            <div class="nav-right" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+                <button class="menu-btn" id="menuBtn" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+                    <span>Filter</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                
+                <!-- Filter Menu (hidden by default) -->
+                <div class="filter-menu" id="filterMenu" style="display: none;">
+                    <div class="filter-menu-header">
+                        <h3>Filter & Sort</h3>
+                        <button class="close-menu" id="closeMenu">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="filter-menu-content">
+                        <div class="filter-section">
+                            <label>Search Proposals</label>
+                            <div class="search-container-menu">
+                                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                <input type="text" id="searchInput" class="search-input-menu" placeholder="Search by title, organization...">
+                                <button id="clearSearch" class="clear-search" style="display: none;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <label>Filter by Organization</label>
+                            <select id="orgFilter" class="filter-select" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 0.9rem;">
+                                <option value="all">All Organizations</option>
+                                <!-- Organization options populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="filter-section">
+                            <label>Sort by Decision Date</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="sortOrder" value="recent" checked>
+                                    <span>Latest First</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="sortOrder" value="oldest">
+                                    <span>Oldest First</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposals List -->
+        <section class="proposals-section">
+            <div id="proposalsList" class="proposals-list">
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <p>Loading proposals...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Petition Section (hidden by default) -->
+        <section id="petitionSection" class="proposals-section" style="display: none;">
+            <div id="petitionList" class="proposals-list"></div>
+        </section>
+
+        <!-- About Section (hidden by default) -->
+        <section id="aboutSection" class="proposals-section" style="display: none;">
+            <div class="about-page">
+                
+                <!-- Hero Section - Full viewport impact -->
+                <div class="about-hero-section">
+                    <div class="hero-badge">Introducing GlassBallots</div>
+                    <h1 class="hero-title">Democracy,<br><span class="gradient-text">Reimagined.</span></h1>
+                    <p class="hero-subtitle">A new era of transparent, secure, and intelligent voting built on blockchain technology and powered by AI.</p>
+                </div>
+
+                <!-- Feature Cards - Bento Grid Style -->
+                <div class="about-bento-grid">
+                    <div class="bento-card bento-large card-transparency">
+                        <div class="bento-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3>Complete Transparency</h3>
+                        <p>Every vote is permanently recorded on an immutable blockchain ledger. No hidden processes, no backdoors—just pure, verifiable democracy that anyone can audit.</p>
+                        <div class="bento-visual">
+                            <div class="chain-visualization" id="chainVisualization">
+                                <!-- Blocks will be dynamically generated -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bento-card bento-medium card-security">
+                        <div class="bento-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>Military-Grade Security</h3>
+                        <p>Advanced cryptographic protocols protect every interaction. Your vote is secure, private, and tamper-proof.</p>
+                    </div>
+
+                    <div class="bento-card bento-medium card-ai">
+                        <div class="bento-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>AI-Powered Insights</h3>
+                        <p>Intelligent analysis helps you understand proposals with unbiased summaries and key facts.</p>
+                        <div class="bento-visual">
+                            <div class="ai-typing-visualization" id="aiTypingVisualization">
+                                <span class="ai-typing-text"></span><span class="ai-cursor">|</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bento-card bento-wide card-community">
+                        <div class="bento-content-split">
+                            <div class="bento-text">
+                                <div class="bento-icon">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                        <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
+                                        <path d="M23 21V19C22.9986 17.177 21.765 15.5857 20 15.13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M16 3.13C17.7699 3.58317 19.0078 5.17799 19.0078 7.005C19.0078 8.83201 17.7699 10.4268 16 10.88" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <h3>Built for Communities</h3>
+                                <p>From neighborhood associations to global organizations, GlassBallots scales to meet your needs. Create organizations, manage members, and make decisions together.</p>
+                            </div>
+                            <div class="bento-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number">100%</span>
+                                    <span class="stat-label">Transparent</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">∞</span>
+                                    <span class="stat-label">Scalable</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">24/7</span>
+                                    <span class="stat-label">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How It Works - Timeline Style -->
+                <div class="about-timeline-section">
+                    <div class="timeline-header">
+                        <span class="section-label">The Process</span>
+                        <h2>From Proposal to Decision</h2>
+                        <p>A seamless journey through democratic participation</p>
+                    </div>
+                    
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <div class="timeline-number">01</div>
+                            <div class="timeline-content">
+                                <h4>Submit</h4>
+                                <p>Propose ideas that matter to your community</p>
+                            </div>
+                        </div>
+                        <div class="timeline-connector"></div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">02</div>
+                            <div class="timeline-content">
+                                <h4>Analyze</h4>
+                                <p>AI reviews for clarity and provides insights</p>
+                            </div>
+                        </div>
+                        <div class="timeline-connector"></div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">03</div>
+                            <div class="timeline-content">
+                                <h4>Vote</h4>
+                                <p>Community members cast secure, private votes</p>
+                            </div>
+                        </div>
+                        <div class="timeline-connector"></div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">04</div>
+                            <div class="timeline-content">
+                                <h4>Record</h4>
+                                <p>Results are immutably stored on blockchain</p>
+                            </div>
+                        </div>
+                        <div class="timeline-connector"></div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">05</div>
+                            <div class="timeline-content">
+                                <h4>Implement</h4>
+                                <p>Approved proposals move forward with clarity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mission Statement - Cinematic -->
+                <div class="about-mission-section">
+                    <div class="mission-content">
+                        <span class="section-label">Our Mission</span>
+                        <h2>Every Voice Matters.<br>Every Vote Counts.</h2>
+                        <p>We're building the infrastructure for trust in collective decision-making. GlassBallots empowers communities worldwide to participate in democracy with confidence, knowing their voices are heard and their votes are protected.</p>
+                        <button class="mission-cta-btn" onclick="returnToHome && returnToHome()">
+                            <span class="cta-text">Ready to transform how your community makes decisions?</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tech Stack - Minimal -->
+                <div class="about-tech-section">
+                    <span class="section-label">Powered By</span>
+                    <div class="tech-logos">
+                        <a href="https://ethereum.org/" target="_blank" rel="noopener noreferrer" class="tech-item-link">
+                            <span class="tech-name">Ethereum</span>
+                            <span class="tech-desc">Blockchain</span>
+                        </a>
+                        <a href="https://openai.com/" target="_blank" rel="noopener noreferrer" class="tech-item-link">
+                            <span class="tech-name">OpenAI</span>
+                            <span class="tech-desc">AI Analysis</span>
+                        </a>
+                        <a href="https://hardhat.org/" target="_blank" rel="noopener noreferrer" class="tech-item-link">
+                            <span class="tech-name">Hardhat</span>
+                            <span class="tech-desc">Smart Contracts</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Search Organizations Section (hidden by default) -->
+        <section id="searchSection" class="proposals-section" style="display: none;">
+            <div class="search-organizations-content">
+                <div class="search-org-header">
+                    <h2>Find Organizations</h2>
+                    <p>Search for organizations by name or join with a unique code.</p>
+                </div>
+                
+                <div class="search-org-container">
+                    <div class="search-org-input-container">
+                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <input type="text" id="orgSearchInput" class="search-org-input" placeholder="Search by organization name or code...">
+                        <button id="orgSearchBtn" class="btn btn-primary btn-sm">Search</button>
+                    </div>
+                </div>
+                
+                <div class="join-code-container">
+                    <h3>Have a Code?</h3>
+                    <p>Enter an organization's unique 8-character code to join directly.</p>
+                    <div class="join-code-input-container">
+                        <input type="text" id="orgJoinCode" class="join-code-input" placeholder="Enter code (e.g., ABCD1234)" maxlength="8">
+                        <button id="orgJoinBtn" class="btn btn-secondary">Join Organization</button>
+                    </div>
+                    <div id="joinMessage" class="join-message" style="display: none;"></div>
+                </div>
+                
+                <div id="orgSearchResults" class="org-search-results">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>GlassBallots · Powered by AI & Blockchain</p>
+        </footer>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DASHBOARD TEMPLATES -->
+    <!-- ============================================ -->
+    
+    <!-- LOADER TEMPLATES -->
+    <template id="tpl-loader">
+        <div class="loader-container">
+            <div class="loader"></div>
+            <p data-slot="message">Loading...</p>
+        </div>
+    </template>
+
+    <template id="tpl-error-card">
+        <div class="result-card">
+            <h3>Error</h3>
+            <p data-slot="message"></p>
+            <button class="btn btn-secondary btn-sm" data-action="back" style="margin-top: 1rem;">← Back to Home</button>
+        </div>
+    </template>
+
+    <template id="tpl-empty-state">
+        <div class="result-card">
+            <p data-slot="message"></p>
+            <p data-slot="submessage" style="color: var(--text-secondary); margin-top: 0.5rem;"></p>
+        </div>
+    </template>
+
+    <template id="tpl-empty-state-with-back">
+        <div class="result-card">
+            <p data-slot="message"></p>
+            <button class="btn btn-secondary btn-sm" data-action="return-home" style="margin-top: 1rem;">← Back to Home</button>
+        </div>
+    </template>
+
+    <!-- PROPOSAL CARD TEMPLATES -->
+    <template id="tpl-proposal-card">
+        <div class="proposal-card">
+            <h3 data-slot="title"></h3>
+            <div class="proposal-meta">
+                <span class="status-badge" data-slot="status"></span>
+                <span data-slot="organization" style="color: var(--text-secondary); font-size: 0.85rem;"></span>
+                <span data-slot="decision-date"></span>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-petition-card">
+        <div class="proposal-card">
+            <h3 data-slot="title"></h3>
+            <div class="proposal-meta">
+                <span class="status-badge petition">PETITION</span>
+                <span data-slot="organization" style="color: var(--text-secondary); font-size: 0.85rem;"></span>
+                <span data-slot="decision-date"></span>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-user-proposal-card">
+        <div class="proposal-card">
+            <h3 data-slot="title"></h3>
+            <div class="proposal-meta">
+                <span class="status-badge" data-slot="status"></span>
+                <span data-slot="decision-date"></span>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-user-proposals-header">
+        <div class="user-proposals-container" style="grid-column: 1 / -1;">
+            <div class="user-proposals-header" style="margin-bottom: 1rem;">
+                <button class="btn btn-secondary btn-sm" data-action="return-home" style="margin-bottom: 1rem;">← Back to Home</button>
+                <h2 data-slot="title" style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary);"></h2>
+                <p data-slot="count" style="color: var(--text-secondary); margin-top: 0.25rem;"></p>
+                <div class="user-proposals-filter" style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <input type="text" id="userProposalSearch" data-slot="search-input" placeholder="Search proposals..."
+                           style="flex: 1; min-width: 200px; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 0.9rem;">
+                    <select id="userProposalSort" style="padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 0.9rem;">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="alpha">A-Z</option>
+                    </select>
+                </div>
+            </div>
+            <div id="userProposalsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;"></div>
+        </div>
+    </template>
+
+    <!-- ORGANIZATION TEMPLATES -->
+    <template id="tpl-org-search-result">
+        <div class="org-result-card">
+            <div class="org-result-info">
+                <div class="org-result-name" data-slot="name"></div>
+                <div class="org-result-meta">
+                    <span class="org-result-code" data-slot="code"></span>
+                    <span data-slot="member-count"></span>
+                    <span data-slot="owner"></span>
+                </div>
+            </div>
+            <div class="org-result-actions" data-slot="actions"></div>
+        </div>
+    </template>
+
+    <template id="tpl-org-join-button">
+        <button class="btn btn-primary btn-sm" data-action="join">Request to Join</button>
+    </template>
+
+    <template id="tpl-org-role-badge">
+        <span class="org-role-badge" data-slot="role"></span>
+    </template>
+
+    <template id="tpl-my-organizations">
+        <div class="my-organizations-content" style="grid-column: 1 / -1;">
+            <button class="btn btn-secondary btn-sm" data-action="return-home" style="margin-bottom: 1rem; align-self: flex-start;">← Back to Home</button>
+            <div class="my-orgs-header">
+                <h2>My Organizations</h2>
+                <button class="btn btn-primary" data-action="create-org">+ Create New</button>
+            </div>
+            <div id="ownedOrgsList"></div>
+            <div id="memberOrgsList"></div>
+        </div>
+    </template>
+
+    <template id="tpl-orgs-section-header">
+        <div>
+            <h3 data-slot="title" style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;"></h3>
+            <div data-slot="grid" class="orgs-cards-grid"></div>
+        </div>
+    </template>
+
+    <template id="tpl-owned-org-card">
+        <div class="org-card owned-org-card">
+            <div class="org-card-header">
+                <div class="org-card-title" data-slot="name"></div>
+                <span class="org-card-role owner">Owner</span>
+            </div>
+            <div class="org-card-stats">
+                <span data-slot="member-count"></span>
+                <span data-slot="pending-count" style="color: var(--danger);"></span>
+            </div>
+            <div class="org-card-code">
+                <span data-slot="code-display"></span>
+                <button data-action="copy-code" title="Copy code">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                        <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="org-card-actions">
+                <button class="btn btn-primary btn-sm" data-action="new-proposal">+ New Proposal</button>
+                <button class="btn btn-secondary btn-sm" data-action="view-requests">View Requests</button>
+                <button class="btn btn-sm" style="background: var(--danger); color: white;" data-action="delete-org">Delete</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-member-org-card">
+        <div class="org-card owned-org-card">
+            <div class="org-card-header">
+                <div class="org-card-title" data-slot="name"></div>
+                <span class="org-card-role" data-slot="role"></span>
+            </div>
+            <div class="org-card-stats">
+                <span data-slot="member-count"></span>
+            </div>
+            <div class="org-card-code">
+                <span data-slot="code-display"></span>
+                <button data-action="copy-code" title="Copy code">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                        <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="org-card-actions" data-slot="actions"></div>
+        </div>
+    </template>
+
+    <template id="tpl-member-org-actions-approved">
+        <button class="btn btn-primary btn-sm" data-action="view-proposals">View Proposals</button>
+        <button class="btn btn-sm" style="background: var(--danger); color: white;" data-action="leave-org">Leave</button>
+    </template>
+
+    <template id="tpl-member-org-actions-pending">
+        <span style="color: var(--text-secondary); font-size: 0.875rem;">Awaiting approval...</span>
+    </template>
+
+    <!-- ORGANIZATION DASHBOARD TEMPLATES -->
+    <template id="tpl-org-dashboard">
+        <div class="org-dashboard" style="grid-column: 1 / -1;">
+            <div class="org-dashboard-header">
+                <button class="btn btn-secondary btn-sm" data-action="back" style="margin-bottom: 1rem;">← Back</button>
+                <div class="org-dashboard-title-row">
+                    <div>
+                        <h2 data-slot="org-name" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;"></h2>
+                        <div style="display: flex; gap: 1rem; align-items: center; color: var(--text-secondary);">
+                            <span data-slot="member-count"></span>
+                            <span data-slot="code-display"></span>
+                            <button data-action="copy-code" class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.5rem;">Copy Code</button>
+                        </div>
+                    </div>
+                    <div class="org-dashboard-header-actions" data-slot="header-actions"></div>
+                </div>
+            </div>
+            <div class="org-dashboard-tabs" data-slot="tabs"></div>
+            <div id="orgDashboardContent" class="org-dashboard-content"></div>
+        </div>
+    </template>
+
+    <template id="tpl-org-dash-tab">
+        <button class="org-dash-tab" data-slot="label"></button>
+    </template>
+
+    <template id="tpl-org-proposal-card">
+        <div class="proposal-card org-proposal-card">
+            <div class="proposal-card-header">
+                <h3 data-slot="title"></h3>
+                <span class="restricted-badge" data-slot="restricted" style="display: none;">RESTRICTED VOTING</span>
+            </div>
+            <div class="proposal-meta">
+                <span data-slot="decision-date"></span>
+                <span data-slot="vote-count"></span>
+            </div>
+            <div class="proposal-actions" data-slot="admin-actions" style="display: none;"></div>
+            <div data-slot="vote-status"></div>
+        </div>
+    </template>
+
+    <template id="tpl-org-proposal-admin-actions">
+        <button class="btn btn-sm btn-secondary" data-action="edit">Edit</button>
+        <button class="btn btn-sm btn-secondary" data-action="permissions">Permissions</button>
+    </template>
+
+    <template id="tpl-vote-already-voted">
+        <div class="vote-status-notice" style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; color: #3b82f6;">
+            You have already voted: <span data-slot="vote-type"></span>
+        </div>
+    </template>
+
+    <template id="tpl-vote-restricted">
+        <div class="vote-restriction-notice" style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 6px; color: #f59e0b;">
+            [Restricted] Selected members only
+        </div>
+    </template>
+
+    <template id="tpl-petition-item">
+        <div class="petition-card">
+            <div class="petition-header">
+                <div>
+                    <strong data-slot="proposal-title"></strong>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        By <span data-slot="username"></span>
+                        <span style="font-family: monospace; font-size: 0.75rem;" data-slot="unique-id"></span>
+                    </div>
+                </div>
+                <div data-slot="timestamp" style="font-size: 0.8rem; color: var(--text-muted);"></div>
+            </div>
+            <div class="petition-text" data-slot="text" style="margin-top: 0.75rem; padding: 1rem; background: var(--bg); border-radius: 8px; white-space: pre-wrap;"></div>
+        </div>
+    </template>
+
+    <template id="tpl-pending-request-card">
+        <div class="pending-request-card">
+            <div class="pending-request-info">
+                <div class="pending-request-username" data-slot="username"></div>
+                <div class="pending-request-id" data-slot="unique-id"></div>
+                <div class="pending-request-date" data-slot="request-date"></div>
+            </div>
+            <div class="pending-request-actions">
+                <button class="btn btn-sm btn-primary" data-action="approve">Approve</button>
+                <button class="btn btn-sm" style="background: var(--danger); color: white;" data-action="reject">Reject</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-member-card">
+        <div class="member-card">
+            <div class="member-info">
+                <div class="member-username" data-slot="username"></div>
+                <div class="member-id" data-slot="unique-id"></div>
+                <span class="member-role-badge" data-slot="role"></span>
+            </div>
+            <div class="member-actions" data-slot="actions"></div>
+        </div>
+    </template>
+
+    <!-- MODAL TEMPLATES -->
+    <template id="tpl-modal-overlay">
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 data-slot="title"></h2>
+                    <button class="modal-close" data-action="close">×</button>
+                </div>
+                <div class="modal-body" data-slot="body"></div>
+                <div class="modal-footer" data-slot="footer"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-confirm-modal">
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h2 data-slot="title"></h2>
+                    <button class="modal-close" data-action="close">×</button>
+                </div>
+                <div class="modal-body">
+                    <p data-slot="message"></p>
+                    <div data-slot="warning" style="color: var(--danger); font-weight: 600; margin: 1rem 0;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-action="cancel">Cancel</button>
+                    <button class="btn" data-action="confirm" data-slot="confirm-btn"></button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-full-petition-modal">
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+                <div class="modal-header" style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--text-primary);">Your Petition Submission</h3>
+                    <button data-action="close" style="background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0.25rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 1.25rem; overflow-y: auto; flex: 1;">
+                    <pre data-slot="petition-text" style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; color: var(--text-primary); line-height: 1.6; margin: 0; background: var(--bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);"></pre>
+                </div>
+                <div class="modal-footer" style="padding: 1rem 1.25rem; border-top: 1px solid var(--border);">
+                    <button class="btn btn-secondary" data-action="close">Close</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-profile-modal">
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>Your Profile</h2>
+                    <button class="modal-close" data-action="close">×</button>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; border: 2px solid var(--border);">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 data-slot="username" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;"></h3>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        <span data-slot="unique-id" style="font-family: monospace; font-size: 0.9rem;"></span>
+                        <button data-action="copy-id" class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Copy</button>
+                    </div>
+                    <div style="text-align: left; background: var(--bg); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <span style="color: var(--text-secondary);">Proposals Voted</span>
+                            <span data-slot="votes-count" style="font-weight: 600;"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <span style="color: var(--text-secondary);">Petitions Submitted</span>
+                            <span data-slot="petitions-count" style="font-weight: 600;"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">Member Since</span>
+                            <span data-slot="member-since" style="font-weight: 600;"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-action="close">Close</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- CREATE ORG FORM TEMPLATE -->
+    <template id="tpl-create-org-modal">
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>Create New Organization</h2>
+                    <button class="modal-close" data-action="close">×</button>
+                </div>
+                <form id="createOrgForm" class="modal-body">
+                    <div class="modal-form-group">
+                        <label>Organization Name</label>
+                        <input type="text" name="name" placeholder="Enter organization name..." required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Description (Optional)</label>
+                        <textarea name="description" placeholder="Describe your organization..."></textarea>
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-action="cancel">Cancel</button>
+                    <button class="btn btn-primary" data-action="submit">Create Organization</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- CREATE PROPOSAL FORM TEMPLATE -->
+    <template id="tpl-create-proposal-modal">
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2 data-slot="title">Create Proposal</h2>
+                    <button class="modal-close" data-action="close">×</button>
+                </div>
+                <form id="createOrgProposalForm" class="modal-body">
+                    <div class="modal-form-group">
+                        <label>Proposal Title</label>
+                        <input type="text" name="title" placeholder="Enter proposal title..." required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Description</label>
+                        <textarea name="description" placeholder="Describe the proposal..." required></textarea>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Authorized By</label>
+                        <input type="text" name="authorized_by" placeholder="Name of authorizing person or body..." required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Decision Date</label>
+                        <input type="date" name="decision_date" required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Voting Permissions</label>
+                        <div class="voting-permissions-section">
+                            <div class="voting-permission-controls">
+                                <button type="button" class="btn btn-sm btn-secondary" data-action="select-all">Select All</button>
+                                <button type="button" class="btn btn-sm btn-secondary" data-action="deselect-all">Deselect All</button>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0;">Deselect members to restrict voting access. Unchecked members will see "RESTRICTED VOTING" on this proposal.</p>
+                            <div class="voters-list" data-slot="voters-list"></div>
+                        </div>
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-action="cancel">Cancel</button>
+                    <button class="btn btn-primary" data-action="submit">Create Proposal</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-voter-checkbox">
+        <label class="voter-checkbox">
+            <input type="checkbox" name="allowed_voters" checked>
+            <span class="voter-username" data-slot="username"></span>
+            <span class="voter-id" data-slot="unique-id"></span>
+        </label>
+    </template>
+
+    <!-- Dashboard Modules (order matters - template-utils and core must load first) -->
+    <script src="/static/dashboard/template-utils.js"></script>
+    <script src="/static/dashboard/dashboard-core.js"></script>
+    <script src="/static/dashboard/dashboard-proposals.js"></script>
+    <script src="/static/dashboard/dashboard-organizations.js"></script>
+    <script src="/static/dashboard/dashboard-profile.js"></script>
+</body>
+</html>

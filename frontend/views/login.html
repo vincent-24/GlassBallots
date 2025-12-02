@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ProposalAnalyst</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        // Apply saved theme before page renders to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="login-screen">
+            <div class="login-card">
+                <h1>ProposalAnalyst</h1>
+                <p class="login-subtitle">Proposal Review System</p>
+                
+                <div class="login-form">
+                    <input 
+                        type="text" 
+                        id="usernameInput" 
+                        placeholder="Enter username"
+                        class="login-input"
+                    />
+                    <button id="loginBtn" class="btn btn-primary">
+                        <span class="btn-text">Login</span>
+                        <span class="loader" style="display: none;"></span>
+                    </button>
+                    <button id="demoLoginBtn" class="btn btn-secondary">
+                        Demo Login
+                    </button>
+                </div>
+                
+                <p class="login-note">Demo mode: Any username will work</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const usernameInput = document.getElementById('usernameInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const demoLoginBtn = document.getElementById('demoLoginBtn');
+
+        loginBtn.addEventListener('click', () => login(usernameInput.value));
+        demoLoginBtn.addEventListener('click', () => login('DemoUser'));
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login(usernameInput.value);
+        });
+
+        async function login(username) {
+            if (!username || username.trim() === '') {
+                alert('Please enter a username');
+                return;
+            }
+
+            setLoginLoading(true);
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username: username.trim() })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                if (data.success) {
+                    // Store login state
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('username', data.user.username);
+                    
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
+                } else {
+                    throw new Error('Login failed');
+                }
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            } finally {
+                setLoginLoading(false);
+            }
+        }
+
+        function setLoginLoading(isLoading) {
+            const btnText = loginBtn.querySelector('.btn-text');
+            const loader = loginBtn.querySelector('.loader');
+
+            if (isLoading) {
+                loginBtn.disabled = true;
+                demoLoginBtn.disabled = true;
+                btnText.textContent = 'Logging in...';
+                loader.style.display = 'block';
+            } else {
+                loginBtn.disabled = false;
+                demoLoginBtn.disabled = false;
+                btnText.textContent = 'Login';
+                loader.style.display = 'none';
+            }
+        }
+
+        // Check if already logged in
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            window.location.href = '/dashboard';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+# ============================================
+# GLASSBALLOTS - GIT IGNORE
+# ============================================
+
+# Environment variables with sensitive data
+.env
+.env.local
+.env.*.local
+
+# API Keys and Secrets
+*.key
+*.pem
+secrets/
+
+# ============================================
+# NODE / JAVASCRIPT
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# ============================================
+# DATABASES
+# ============================================
+# SQLite databases (contains user data)
+*.db
+*.sqlite
+*.sqlite3
+glassballots.db
+
+# Database backups
+*.db-backup
+*.db.bak
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# BLOCKCHAIN / HARDHAT
+# ============================================
+# Hardhat files
+cache/
+artifacts/
+typechain/
+typechain-types/
+
+# Deployed contract addresses (may contain sensitive info)
+deployments/
+.openzeppelin/
+
+# ============================================
+# PYTHON / AI SERVICE
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# OS
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.txt
+
+# ============================================
+# TEST DATA (keep test scripts, ignore generated data)
+# ============================================
+test-results/
+coverage/
+.nyc_output/
+
+# ============================================
+# OPTIONAL: Keep example env for reference
+# ============================================
+# !.env.example

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - GlassBallots</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        // Apply saved theme before page renders to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="login-screen">
+            <div class="login-card">
+                <h1>GlassBallots</h1>
+                <p class="login-subtitle">Create Your Account</p>
+                
+                <div class="login-form">
+                    <div id="signupError" class="error-message" style="display: none;"></div>
+                    
+                    <input 
+                        type="text" 
+                        id="signupUsername" 
+                        placeholder="Username"
+                        class="login-input"
+                        autocomplete="username"
+                    />
+                    <input 
+                        type="email" 
+                        id="signupEmail" 
+                        placeholder="Email"
+                        class="login-input"
+                        autocomplete="email"
+                    />
+                    <input 
+                        type="password" 
+                        id="signupPassword" 
+                        placeholder="Password (min 6 characters)"
+                        class="login-input"
+                        autocomplete="new-password"
+                    />
+                    <input 
+                        type="password" 
+                        id="signupPasswordConfirm" 
+                        placeholder="Confirm Password"
+                        class="login-input"
+                        autocomplete="new-password"
+                    />
+                    
+                    <button id="signupBtn" class="btn btn-primary">
+                        <span class="btn-text">Create Account</span>
+                    </button>
+                    
+                    <div class="login-divider">
+                        <span>Already have an account?</span>
+                    </div>
+                    
+                    <a href="/" class="btn btn-secondary">Back to Login</a>
+                </div>
+                
+                <p class="login-note">Your password will be encrypted and stored securely</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/signup.js"></script>
+</body>
+</html>
