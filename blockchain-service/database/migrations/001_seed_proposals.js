@@ -26,7 +26,7 @@ async function seedProposals() {
     const db = new sqlite3.Database(DB_PATH);
     
     console.log('Starting proposal migration...');
-    console.log(`📂 Reading proposals from: ${PROPOSALS_DIR}`);
+    console.log(`Reading proposals from: ${PROPOSALS_DIR}`);
     
     // Check if proposals directory exists
     if (!fs.existsSync(PROPOSALS_DIR)) {

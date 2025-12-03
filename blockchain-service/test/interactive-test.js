@@ -52,7 +52,7 @@ async function interactiveTest() {
                     await runAutomaticTests();
                     break;
                 case '8':
-                    console.log('👋 Goodbye!');
+                    console.log('Goodbye!');
                     userDB.close();
                     rl.close();
                     return;

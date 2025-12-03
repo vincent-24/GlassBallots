@@ -278,19 +278,19 @@ Write a neutral summary based solely on these facts:"""
             - bias_report: Dictionary with loaded language, stakeholders, and equity concerns
             - objective_facts: Dictionary of extracted facts
         """
-        # Step 1: Detect loaded language
+        # 1. Detect loaded language
         loaded_language = self._find_loaded_language(proposal_text)
         
-        # Step 2: Identify stakeholder groups
+        # 2. Identify stakeholder groups
         stakeholders = self._find_stakeholders(proposal_text)
         
-        # Step 3: Analyze equity concerns
+        # 3. Analyze equity concerns
         equity_concerns = self._get_unspoken_concerns(proposal_text, stakeholders)
         
-        # Step 4: Extract objective facts
+        # 4. Extract objective facts
         objective_facts = self._extract_objective_facts(proposal_text)
         
-        # Step 5: Generate neutral summary
+        # 5. Generate neutral summary
         neutral_summary = self._generate_neutral_summary(objective_facts)
         
         return {

@@ -1,55 +1,65 @@
 # ============================================
 # GLASSBALLOTS - GIT IGNORE
 # ============================================
+# This file ensures we never commit:
+# - Dependencies (node_modules, venv)
+# - Secrets (.env)
+# - Runtime data (databases, logs)
+# ============================================
 
-# Environment variables with sensitive data
+# ============================================
+# DEPENDENCIES - Never commit these
+# ============================================
+# Node.js
+node_modules/
+frontend/node_modules/
+blockchain-service/node_modules/
+
+# Python virtual environments
+venv/
+env/
+ENV/
+ai-service/venv/
+.Python
+*.py[cod]
+*$py.class
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+*.so
+
+# ============================================
+# SECRETS - Never commit these
+# ============================================
 .env
 .env.local
 .env.*.local
-
-# API Keys and Secrets
 *.key
 *.pem
 secrets/
 
 # ============================================
-# NODE / JAVASCRIPT
+# DATABASES - Never commit binary data
 # ============================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-yarn.lock
-.pnpm-debug.log*
-
-# Build outputs
-dist/
-build/
-*.tsbuildinfo
-
-# ============================================
-# DATABASES
-# ============================================
-# SQLite databases (contains user data)
 *.db
 *.sqlite
 *.sqlite3
 glassballots.db
-
-# Database backups
+blockchain-service/database/glassballots.db
 *.db-backup
 *.db.bak
 
 # ============================================
-# LOGS
+# LOGS & RUNTIME - Never commit these
 # ============================================
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
+.pids/
 pids/
 *.pid
 *.seed
@@ -58,33 +68,26 @@ pids/
 # ============================================
 # BLOCKCHAIN / HARDHAT
 # ============================================
-# Hardhat files
 cache/
 artifacts/
 typechain/
 typechain-types/
-
-# Deployed contract addresses (may contain sensitive info)
 deployments/
 .openzeppelin/
 
 # ============================================
-# PYTHON / AI SERVICE
+# BUILD OUTPUTS
 # ============================================
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-*.egg-info/
-.pytest_cache/
-.coverage
-htmlcov/
+dist/
+build/
+*.tsbuildinfo
+
+# ============================================
+# PACKAGE LOCKS - Optional but recommended
+# ============================================
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
 
 # ============================================
 # IDE / EDITOR
@@ -94,11 +97,9 @@ htmlcov/
 *.swp
 *.swo
 *~
-.DS_Store
-Thumbs.db
 
 # ============================================
-# OS
+# OS FILES
 # ============================================
 .DS_Store
 .AppleDouble
@@ -116,16 +117,10 @@ temp/
 *.tmp
 *.bak
 *.backup
-*.txt
 
 # ============================================
-# TEST DATA (keep test scripts, ignore generated data)
+# TEST DATA
 # ============================================
 test-results/
 coverage/
 .nyc_output/
-
-# ============================================
-# OPTIONAL: Keep example env for reference
-# ============================================
-# !.env.example

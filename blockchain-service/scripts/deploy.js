@@ -30,7 +30,7 @@ async function main() {
         transport: http('http://127.0.0.1:8545'),
     });
     
-    console.log('📝 Deploying contracts with account:', account.address);
+    console.log('Deploying contracts with account:', account.address);
     console.log('Network:', hre.network.name);
     console.log('');
     
@@ -39,7 +39,7 @@ async function main() {
     const feedbackArtifact = await hre.artifacts.readArtifact('Feedback');
     
     // Deploy Ballot contract
-    console.log('📜 Deploying Ballot contract...');
+    console.log('Deploying Ballot contract...');
     const ballotHash = await walletClient.deployContract({
         abi: ballotArtifact.abi,
         bytecode: ballotArtifact.bytecode,
@@ -51,7 +51,7 @@ async function main() {
     console.log('');
     
     // Deploy Feedback contract
-    console.log('📜 Deploying Feedback contract...');
+    console.log('Deploying Feedback contract...');
     const feedbackHash = await walletClient.deployContract({
         abi: feedbackArtifact.abi,
         bytecode: feedbackArtifact.bytecode,
@@ -86,13 +86,13 @@ async function main() {
     
     console.log('Deployment info saved to:', deploymentFile);
     console.log('');
-    console.log('✅ Deployment completed successfully!');
+    console.log('Deployment completed successfully!');
     console.log('');
     console.log('Contract Addresses:');
     console.log('  Ballot:  ', ballotAddress);
     console.log('  Feedback:', feedbackAddress);
     console.log('');
-    console.log('📋 Add this to your .env file:');
+    console.log('Add this to your .env file:');
     console.log(`  BALLOT_CONTRACT_ADDRESS=${ballotAddress}`);
 }
 

@@ -12,8 +12,9 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Use absolute path to database file
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'glassballots.db');
+// STANDARDIZED DATABASE PATH: Always use blockchain-service/database/glassballots.db
+// This is the single source of truth for the database location
+const DB_PATH = path.join(__dirname, 'glassballots.db');
 
 class UserDatabase {
     constructor() {

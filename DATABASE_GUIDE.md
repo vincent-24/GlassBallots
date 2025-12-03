@@ -1,12 +1,7 @@
-# GlassBallots - Quick Reference
+# GlassBallots - Database Quick Reference
 
-## 🗄️ Database Location
+## Database Location
 **Path:** `./blockchain-service/database/glassballots.db`
-
-### View All Users
-```bash
-./view_users.sh
-```
 
 ### Query Database Directly
 ```bash
@@ -39,12 +34,6 @@ sqlite3 blockchain-service/database/glassballots.db "SELECT id, title, status FR
   - "Invalid credentials" - Wrong password or user doesn't exist
   - "Username/email and password are required" - Missing fields
 
-### Test Accounts
-| Username | Password | Email |
-|----------|----------|-------|
-| bob | secure123 | bob@example.com |
-| vincent | (your password) | v_burner1@outlook.com |
-
 ## Services
 
 ### Start All Services
@@ -58,10 +47,10 @@ Press Ctrl+C in the terminal running start_services.sh, or:
 kill $(cat .pids/*.pid) 2>/dev/null
 ```
 
-### View Service URLs
+### Service URLs
 - **Frontend:** http://localhost:3000
 - **API:** http://localhost:3001
-- **AI Service:** http://localhost:5000
+- **AI Service:** http://localhost:5001
 - **Blockchain RPC:** http://127.0.0.1:8545
 
 ### View Logs
@@ -93,17 +82,17 @@ curl -X POST http://localhost:3001/api/users/login \
 curl http://localhost:3001/api/proposals
 ```
 
-## 🔒 Security Features
+## Security Features
 
-- **Password Encryption:** bcrypt with 12 rounds (salt included)  
-- **Unique Constraints:** Username and email must be unique  
-- **Wallet Generation:** SHA-256 hash of username+email+timestamp  
-- **Session Tokens:** Secure 64-character hex tokens  
-- **Session Expiry:** 7 days (configurable in .env)  
+- **Password Encryption:** bcrypt with 12 rounds (salt included)
+- **Unique Constraints:** Username and email must be unique
+- **Wallet Generation:** SHA-256 hash of username+email+timestamp
+- **Session Tokens:** Secure 64-character hex tokens
+- **Session Expiry:** 7 days (configurable in .env)
 
 ### Verify Password Encryption
 ```bash
 sqlite3 blockchain-service/database/glassballots.db \
-  "SELECT username, password_hash FROM users WHERE username='bob';"
+  "SELECT username, password_hash FROM users WHERE username='testuser';"
 ```
 You should see: `$2b$12$...` (bcrypt hash)

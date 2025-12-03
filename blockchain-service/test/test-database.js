@@ -1,7 +1,7 @@
 import userDB from '../database/db.js';
 
 async function runTests() {
-    console.log('🧪 Starting Database Tests...\n');
+    console.log('Starting Database Tests...\n');
 
     try {
         // Clean up any existing test data first
