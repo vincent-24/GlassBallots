@@ -95,10 +95,10 @@ function Stop-AllServices {
     foreach ($pidFile in $pidFiles) {
         $pidPath = Join-Path $PidDir $pidFile
         if (Test-Path $pidPath) {
-            $pid = Get-Content $pidPath -ErrorAction SilentlyContinue
-            if ($pid) {
+            $procId = Get-Content $pidPath -ErrorAction SilentlyContinue
+            if ($procId) {
                 try {
-                    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
                 } catch {}
             }
             Remove-Item $pidPath -Force -ErrorAction SilentlyContinue
@@ -166,6 +166,9 @@ if (Test-Path "$ScriptDir\.env") {
             [Environment]::SetEnvironmentVariable($name, $value, "Process")
         }
     }
+    # Override DATABASE_PATH with absolute path
+    $absoluteDbPath = "$ScriptDir\blockchain-service\database\glassballots.db"
+    [Environment]::SetEnvironmentVariable("DATABASE_PATH", $absoluteDbPath, "Process")
     Print-Success "Environment variables loaded"
 } else {
     Print-Error ".env file not found!"
@@ -208,8 +211,8 @@ Stop-PortProcess -Port $HardhatPort
 Set-Location "$ScriptDir\blockchain-service"
 
 Print-Info "Launching local Ethereum node..."
-$hardhatProcess = Start-Process -FilePath "node.exe" `
-    -ArgumentList ".\node_modules\.bin\hardhat", "node" `
+$hardhatProcess = Start-Process -FilePath "cmd.exe" `
+    -ArgumentList "/c", "npx", "hardhat", "node" `
     -WorkingDirectory "$ScriptDir\blockchain-service" `
     -RedirectStandardOutput "$LogsDir\hardhat.log" `
     -RedirectStandardError "$LogsDir\hardhat-error.log" `

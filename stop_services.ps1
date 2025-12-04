@@ -42,13 +42,13 @@ foreach ($pidFile in $pidFiles.Keys) {
     $serviceName = $pidFiles[$pidFile]
     
     if (Test-Path $pidPath) {
-        $pid = Get-Content $pidPath -ErrorAction SilentlyContinue
-        if ($pid) {
+        $procId = Get-Content $pidPath -ErrorAction SilentlyContinue
+        if ($procId) {
             try {
-                $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                $process = Get-Process -Id $procId -ErrorAction SilentlyContinue
                 if ($process) {
-                    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-                    Print-Success "$serviceName stopped (PID: $pid)"
+                    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+                    Print-Success "$serviceName stopped (PID: $procId)"
                     $stoppedCount++
                 } else {
                     Print-Warning "$serviceName was not running (stale PID file)"

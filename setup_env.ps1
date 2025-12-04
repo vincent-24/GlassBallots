@@ -180,10 +180,16 @@ if (-not (Test-Path "venv")) {
 
 Print-Info "Installing Python dependencies..."
 & ".\venv\Scripts\pip.exe" install --upgrade pip --quiet
-& ".\venv\Scripts\pip.exe" install -r requirements.txt --quiet
+& ".\venv\Scripts\pip.exe" install -r requirements.txt
 if ($LASTEXITCODE -ne 0) {
     Print-Error "Failed to install Python dependencies"
     exit 1
+}
+
+Print-Info "Downloading spaCy language model..."
+& ".\venv\Scripts\python.exe" -m spacy download en_core_web_sm
+if ($LASTEXITCODE -ne 0) {
+    Print-Warning "Failed to download spaCy model - will retry on first run"
 }
 
 Print-Success "AI Service dependencies installed (venv)"
