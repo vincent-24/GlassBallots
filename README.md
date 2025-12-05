@@ -222,39 +222,6 @@ npx hardhat coverage
 
 ---
 
-## Development
-
-### Adding New Features
-
-1. Create a feature branch
-   ```bash
-   git checkout -b feature/new-feature
-   ```
-
-2. Make changes and test locally
-
-3. Commit and push
-   ```bash
-   git commit -m "Add new feature"
-   git push origin feature/new-feature
-   ```
-
-4. Create a Pull Request
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/vincent-24/GlassBallots/issues)
-
----
-
 ## Acknowledgments
 
 - **OpenAI** - GPT-4o API for proposal analysis
