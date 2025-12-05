@@ -10,7 +10,10 @@ import BaseModel from './BaseModel.js';
 class User extends BaseModel {
     constructor(db, encryptionKey) {
         super(db);
-        this.encryptionKey = encryptionKey || process.env.ENCRYPTION_KEY || 'default-key-32-chars-long-here!';
+        this.encryptionKey = encryptionKey || process.env.ENCRYPTION_KEY;
+        if (!this.encryptionKey) {
+            throw new Error('ENCRYPTION_KEY must be set in environment or passed to User model.');
+        }
     }
 
     // ==================== AUTHENTICATION ====================

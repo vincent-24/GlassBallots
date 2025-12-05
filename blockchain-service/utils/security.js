@@ -16,13 +16,9 @@ const AUTH_TAG_LENGTH = 16; // 128 bits
 // Get or generate encryption key from environment
 function getEncryptionKey() {
     let key = process.env.ENCRYPTION_KEY;
-    
     if (!key) {
-        // In development, generate a consistent key (should be set in production!)
-        console.warn('WARNING: ENCRYPTION_KEY not set in environment. Using development fallback.');
-        key = crypto.createHash('sha256').update('glassballots-dev-key-change-in-production').digest('hex').slice(0, 64);
+        throw new Error('ENCRYPTION_KEY must be set in environment.');
     }
-    
     // Ensure key is 32 bytes (64 hex characters)
     if (key.length !== 64) {
         throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
