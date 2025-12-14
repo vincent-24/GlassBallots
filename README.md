@@ -65,29 +65,10 @@ The platform is built as a microservices architecture with three core services:
    ./setup_env.sh
    ```
 
-   This will:
-   - Install all Node.js dependencies
-   - Create a Python virtual environment
-   - Install Python packages
-   - Copy `.env.example` to `.env`
-   - Initialize the database
-   - Compile smart contracts
-
-3. **Configure environment variables**
-   ```bash
-   nano .env
-   # Add your OPENAI_API_KEY
-   ```
-
-4. **Start all services**
+3. **Start all services**
    ```bash
    ./start_services.sh
    ```
-
-5. **Access the platform**
-   - Frontend: http://localhost:3000
-   - API: http://localhost:3001
-   - AI Service: http://localhost:5001
 
 ---
 
@@ -209,16 +190,6 @@ npx hardhat test
 cd blockchain-service
 npx hardhat coverage
 ```
-
----
-
-## Security Considerations
-
-1. **Never commit `.env` file** - Contains sensitive API keys
-2. **Use strong encryption keys** - Generate with `openssl rand -hex 32`
-3. **Rotate JWT secrets** - In production, rotate regularly
-4. **Use HTTPS in production** - Set up reverse proxy (Nginx/Caddy)
-5. **Audit smart contracts** - Before mainnet deployment
 
 ---
 

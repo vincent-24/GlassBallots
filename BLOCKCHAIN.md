@@ -384,19 +384,3 @@ curl -X POST http://127.0.0.1:8545 \
 | blockchain-service/database/schema.sql | Database schema |
 | blockchain-service/scripts/deploy.js | Contract deployment script |
 | .env | Environment configuration |
-
----
-
-## Summary
-
-GlassBallots implements a hybrid architecture where:
-
-1. **Blockchain** = Immutable source of truth for all votes
-2. **Database** = Fast read cache for dashboards and analytics
-3. **API** = Verification layer ensuring database matches blockchain
-
-This approach provides:
-- Transparency (all votes verifiable on-chain)
-- Performance (instant dashboard loading)
-- Security (multi-layer double-vote prevention)
-- Auditability (transaction hashes link to blockchain proof)
